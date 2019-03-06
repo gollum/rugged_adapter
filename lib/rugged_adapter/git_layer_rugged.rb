@@ -613,6 +613,29 @@ module Gollum
           @repo.checkout(ref, :strategy => :force) unless @repo.bare?
         end
       end
+
+      def files_sorted_by_created_at(sha = nil)
+        sha ||= @repo.head.target.oid
+
+        file_renamings = {}
+        sorting = Rugged::SORT_DATE | Rugged::SORT_TOPO
+
+        @repo.walk(sha, sorting).with_object([]) do |commit, files|
+          parent = commit.parents.first
+
+          diff = commit.diff(parent, reverse: true)
+          diff.find_similar!
+          diff.each_delta do |delta|
+            name = delta.new_file[:path]
+
+            if delta.added?
+              files << (file_renamings[name] || name)
+            elsif delta.renamed?
+              file_renamings[delta.old_file[:path]] = file_renamings[name] || name
+            end
+          end
+        end
+      end
     end
 
     class Tree
