@@ -188,13 +188,29 @@ module Gollum
         @repo.lookup(sha).read_raw
       end
 
-      def apply_patch(head_sha = 'HEAD', patch=nil)
-        false # Rewrite gollum-lib's revert so that it doesn't require a direct equivalent of Grit's apply_patch
-      end
-
-      def revert(path, sha1, sha2, ref)
-        # FIXME: See https://github.com/gollum/grit_adapter/pull/14
-        fail NotImplementedError
+      def revert(path, sha1, sha2)
+        options = {}
+        options[:paths] = [path] if path
+        patch = path ?
+          @repo.diff(sha2, sha1, options).first.diff : @repo.diff(sha2, sha1)
+        options[:location] = :index
+        files = []
+        if path
+          files << path
+        else
+          patch.each_delta do |delta|
+            files << delta.new_file[:path]
+            files << delta.old_file[:path]
+          end
+        end
+        files.uniq!
+        begin
+          result = @repo.apply(patch, options)
+        rescue RuntimeError
+          result = false
+        end
+        return false unless result
+        return @repo.index.write_tree, files
       end
 
       def checkout(path, ref = 'HEAD', options = {})
@@ -310,7 +326,7 @@ module Gollum
         !!(str =~ /^[0-9a-f]{40}$/)
       end
 
-      # Return an array of log commits, given an SHA hash and a hash of
+      # Return an array of log commits, given a SHA hash and a hash of
       # options. From Gitlab::Git
       def build_log(sha, options)
         # Instantiate a Walker and add the SHA hash
@@ -527,13 +543,7 @@ module Gollum
     class Repo
 
       def initialize(path, options)
-        begin
-          @repo = Rugged::Repository.new(path, options)
-        #rescue Grit::InvalidGitRepositoryError
-         # raise Gollum::InvalidGitRepositoryError
-        #rescue Grit::NoSuchPathError
-         # raise Gollum::NoSuchPathError
-        end
+        @repo = Rugged::Repository.new(path, options)
       end
 
       def self.init(path)
