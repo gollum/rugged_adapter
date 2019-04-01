@@ -190,14 +190,14 @@ module Gollum
 
       def revert(path, sha1, sha2)
         options = {}
-        options[:paths] = [path] if path
-        patch = path ?
-          @repo.diff(sha2, sha1, options).first.diff : @repo.diff(sha2, sha1)
         options[:location] = :index
         files = []
         if path
+          options[:paths] = [path]
+          patch = @repo.diff(sha2, sha1, options).first.diff
           files << path
         else
+          patch = @repo.diff(sha2, sha1)
           patch.each_delta do |delta|
             files << delta.new_file[:path]
             files << delta.old_file[:path]
@@ -205,9 +205,9 @@ module Gollum
         end
         files.uniq!
         begin
-          result = @repo.apply(patch, options)
+          @repo.apply(patch, options)
         rescue RuntimeError
-          result = false
+          return false
         end
         return false unless result
         return @repo.index.write_tree, files
