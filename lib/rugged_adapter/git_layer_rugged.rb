@@ -209,7 +209,6 @@ module Gollum
         rescue RuntimeError
           return false
         end
-        return false unless result
         return @repo.index.write_tree, files
       end
 
