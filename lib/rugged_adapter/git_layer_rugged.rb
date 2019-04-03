@@ -191,7 +191,7 @@ module Gollum
       def revert_path(path, sha1, sha2)
         patch = @repo.diff(sha2, sha1).first.diff
         begin
-          @repo.apply(patch, {:location => :index, :path => path)
+          @repo.apply(patch, {:location => :index, :path => path})
         rescue RuntimeError
           return false
         end
@@ -201,11 +201,11 @@ module Gollum
       def revert_commit(sha1, sha2)
         index = @repo.revert_commit(sha2, sha1)
         diff = @repo.diff(sha2, sha1)
-        files = []
+        paths = []
         diff.each_delta do |delta|
-          files << delta.new_file[:path]
+          paths << delta.new_file[:path]
         end
-        return index.write_tree(@repo), files
+        return index.write_tree(@repo), paths
       end
 
       def checkout(path, ref = 'HEAD', options = {})
