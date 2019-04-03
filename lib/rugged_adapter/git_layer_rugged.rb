@@ -189,23 +189,34 @@ module Gollum
       end
 
       def revert_path(path, sha1, sha2)
-        patch = @repo.diff(sha2, sha1).first.diff
+        diff = @repo.diff(sha2, sha1, {:paths => [path]}).first.diff
         begin
-          @repo.apply(patch, {:location => :index, :path => path})
+          result = @repo.apply(diff, {:location => :index, :path => path})
         rescue RuntimeError
           return false
         end
-        return @repo.index.write_tree
+        begin
+          return @repo.index.write_tree
+        rescue Rugged::IndexError
+          return false
+        end
       end
 
       def revert_commit(sha1, sha2)
-        index = @repo.revert_commit(sha2, sha1)
         diff = @repo.diff(sha2, sha1)
+        index = @repo.revert_commit(sha2, sha1)
+        return false unless index
         paths = []
         diff.each_delta do |delta|
           paths << delta.new_file[:path]
+          paths << delta.old_file[:path]
         end
-        return index.write_tree(@repo), paths
+        paths.uniq!
+        begin
+          return index.write_tree(@repo), paths
+        rescue Rugged::IndexError
+          return false
+        end
       end
 
       def checkout(path, ref = 'HEAD', options = {})
