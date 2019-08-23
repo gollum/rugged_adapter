@@ -188,7 +188,8 @@ module Gollum
       def rm(path, options = {})
         index = @repo.index
         index.write
-        ::File.unlink ::File.join(@repo.workdir, path)
+        to_delete = ::File.join(@repo.workdir, path)
+        ::File.unlink to_delete if ::File.exist?(to_delete)
       end
 
       def cat_file(options, sha)
