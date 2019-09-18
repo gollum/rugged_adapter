@@ -165,22 +165,25 @@ module Gollum
         ::File.exists?(@repo.path)
       end
 
-      def grep(query, options={})
-        ref = options[:ref] ? options[:ref] : "HEAD"
-        tree = @repo.lookup(sha_from_ref(ref)).tree
-        tree = @repo.lookup(tree[options[:path]][:oid]) if options[:path]
-        enc = options.fetch(:encoding, 'utf-8')
+      def grep(search_terms, options={})
+        ref   = options[:ref] ? options[:ref] : "HEAD"
+        tree  = @repo.lookup(sha_from_ref(ref)).tree
+        tree  = @repo.lookup(tree[options[:path]][:oid]) if options[:path]
+        enc   = options.fetch(:encoding, 'utf-8')
+        query = /^(.*(?:#{search_terms.join('|')}).*)$/i
         results = []
         tree.walk_blobs(:postorder) do |root, entry|
-          blob = @repo.lookup(entry[:oid])
+          blob  = @repo.lookup(entry[:oid])
           count = 0
-          next if blob.binary?
-          blob.content.force_encoding(enc).each_line do |line|
-            next unless line.match(/#{query}/i)
-            count += 1
+          count += 1 if entry[:name] =~ query
+          next if count == 0 && blob.binary?
+          found_in_blob = []
+          blob.content.force_encoding(enc).scan(query) do |match|
+            found_in_blob << match.first
+            count += match.first.scan(/#{search_terms.join('|')}/i).size
           end
           path = options[:path] ? ::File.join(options[:path], root, entry[:name]) : "#{root}#{entry[:name]}"
-          results << {:name => path, :count => count} unless count == 0
+          results << {:name => path, :count => count, :context => found_in_blob} unless count == 0
         end
         results
       end
