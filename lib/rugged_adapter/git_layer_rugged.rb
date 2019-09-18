@@ -176,11 +176,14 @@ module Gollum
           blob  = @repo.lookup(entry[:oid])
           count = 0
           count += 1 if entry[:name] =~ query
-          next if count == 0 && blob.binary?
           found_in_blob = []
-          blob.content.force_encoding(enc).scan(query) do |match|
-            found_in_blob << match.first
-            count += match.first.scan(/#{search_terms.join('|')}/i).size
+          if blob.binary?
+            next if count == 0 # If count == 1, the filename matches, so we still want to add the binary blob to the results, but not grep through it.
+          else
+            blob.content.force_encoding(enc).scan(query) do |match|
+              found_in_blob << match.first
+              count += match.first.scan(/#{search_terms.join('|')}/i).size
+            end
           end
           path = options[:path] ? ::File.join(options[:path], root, entry[:name]) : "#{root}#{entry[:name]}"
           results << {:name => path, :count => count, :context => found_in_blob} unless count == 0
