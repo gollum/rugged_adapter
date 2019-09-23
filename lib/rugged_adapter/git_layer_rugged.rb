@@ -170,25 +170,14 @@ module Gollum
         tree  = @repo.lookup(sha_from_ref(ref)).tree
         tree  = @repo.lookup(tree[options[:path]][:oid]) if options[:path]
         enc   = options.fetch(:encoding, 'utf-8')
-        query = /^(.*(?:#{search_terms.join('|')}).*)$/i
         results = []
         tree.walk_blobs(:postorder) do |root, entry|
           blob  = @repo.lookup(entry[:oid])
-          count = 0
-          count += 1 if entry[:name] =~ query
-          found_in_blob = []
-          if blob.binary?
-            next if count == 0 # If count == 1, the filename matches, so we still want to add the binary blob to the results, but not grep through it.
-          else
-            blob.content.force_encoding(enc).scan(query) do |match|
-              found_in_blob << match.first
-              count += match.first.scan(/#{search_terms.join('|')}/i).size
-            end
-          end
-          path = options[:path] ? ::File.join(options[:path], root, entry[:name]) : "#{root}#{entry[:name]}"
-          results << {:name => path, :count => count, :context => found_in_blob} unless count == 0
+          path  = options[:path] ? ::File.join(options[:path], root, entry[:name]) : "#{root}#{entry[:name]}"
+          data  = blob.binary? ? nil : blob.content.force_encoding(enc)
+          results << yield(path, data)
         end
-        results
+        results.compact
       end
 
       def rm(path, options = {})
