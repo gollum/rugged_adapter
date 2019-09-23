@@ -165,7 +165,7 @@ module Gollum
         ::File.exists?(@repo.path)
       end
 
-      def grep(search_terms, options={})
+      def grep(search_terms, options={}, &block)
         ref   = options[:ref] ? options[:ref] : "HEAD"
         tree  = @repo.lookup(sha_from_ref(ref)).tree
         tree  = @repo.lookup(tree[options[:path]][:oid]) if options[:path]
