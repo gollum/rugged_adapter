@@ -343,8 +343,10 @@ module Gollum
         walker.push(sha)
         commits = []
         skipped = 0
-        current_path = options[:path]
+        current_path = options[:path].dup
         current_path = nil if current_path == ''
+        track_pathnames = current_path && options[:follow]
+        pathnames = {sha => current_path.dup} if track_pathnames
         limit = options[:limit].to_i
         offset = options[:offset].to_i
         skip_merges = options[:skip_merges]
@@ -361,12 +363,13 @@ module Gollum
                 commit_touches_path?(c, current_path, options[:follow], walker)
                 # This is a commit we care about, unless we haven't skipped enough
                 # yet
+                pathnames[c.oid] = current_path.dup if track_pathnames && !pathnames.has_key?(c.oid)
                 skipped += 1
                 commits.push(Gollum::Git::Commit.new(c)) if skipped > offset
               end
           end
         walker.reset
-        commits
+        track_pathnames ? [commits, pathnames] : commits
       end
 
       # Returns true if +commit+ introduced changes to +path+, using commit
