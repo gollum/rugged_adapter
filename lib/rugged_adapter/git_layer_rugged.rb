@@ -344,7 +344,7 @@ module Gollum
         walker.push(sha)
         commits = []
         skipped = 0
-        current_path = options[:path].dup
+        current_path = options[:path].dup if options[:path]
         current_path = nil if current_path == ''
         track_pathnames = true if current_path && options[:follow]
         limit = options[:limit].to_i
