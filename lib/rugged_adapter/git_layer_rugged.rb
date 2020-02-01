@@ -93,9 +93,9 @@ module Gollum
 
     class Commit
 
-      def initialize(commit, pathname = nil)
+      def initialize(commit, tracked_pathname = nil)
         @commit = commit
-        @pathname = pathname
+        @tracked_pathname = tracked_pathname
       end
 
       def id
@@ -104,7 +104,7 @@ module Gollum
       alias_method :sha, :id
       alias_method :to_s, :id
 
-      attr_reader :commit, :pathname
+      attr_reader :commit, :tracked_pathname
 
       def author
         @author ||= Gollum::Git::Actor.new(@commit.author[:name], @commit.author[:email])
