@@ -93,8 +93,9 @@ module Gollum
 
     class Commit
 
-      def initialize(commit)
+      def initialize(commit, pathname = nil)
         @commit = commit
+        @pathname = pathname
       end
 
       def id
@@ -103,7 +104,7 @@ module Gollum
       alias_method :sha, :id
       alias_method :to_s, :id
 
-      attr_reader :commit
+      attr_reader :commit, :pathname
 
       def author
         @author ||= Gollum::Git::Actor.new(@commit.author[:name], @commit.author[:email])
@@ -345,8 +346,7 @@ module Gollum
         skipped = 0
         current_path = options[:path].dup
         current_path = nil if current_path == ''
-        track_pathnames = current_path && options[:follow]
-        pathnames = {sha => current_path.dup} if track_pathnames
+        track_pathnames = true if current_path && options[:follow]
         limit = options[:limit].to_i
         offset = options[:offset].to_i
         skip_merges = options[:skip_merges]
@@ -363,13 +363,12 @@ module Gollum
                 commit_touches_path?(c, current_path, options[:follow], walker)
                 # This is a commit we care about, unless we haven't skipped enough
                 # yet
-                pathnames[c.oid] = current_path.dup if track_pathnames && !pathnames.has_key?(c.oid)
                 skipped += 1
-                commits.push(Gollum::Git::Commit.new(c)) if skipped > offset
+                commits.push(Gollum::Git::Commit.new(c, track_pathnames ? current_path.dup : nil) if skipped > offset
               end
           end
         walker.reset
-        track_pathnames ? [commits, pathnames] : commits
+        commits
       end
 
       # Returns true if +commit+ introduced changes to +path+, using commit
@@ -602,7 +601,9 @@ module Gollum
 
       def diff(sha1, sha2, *paths)
         opts = paths.nil? ? {} : {:paths => paths}
-        @repo.diff(sha1, sha2, opts).diff.patches.map {|patch| OpenStruct.new(:diff => patch.to_s.split("\n")[2..-1].join("\n").force_encoding("UTF-8"))}.reverse # First remove two superfluous lines. Rugged seems to order the diffs differently than Grit, so reverse.
+        @repo.diff(sha1, sha2, opts).diff.patches.map do |patch|
+          OpenStruct.new(:diff => patch.to_s.split("\n")[2..-1].join("\n").force_encoding("UTF-8"))} # First remove two superfluous lines.
+        end.reverse # Rugged seems to order the diffs differently than Grit, so reverse.
       end
 
       def log(commit = 'refs/heads/master', path = nil, options = {})
