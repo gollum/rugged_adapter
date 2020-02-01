@@ -364,7 +364,7 @@ module Gollum
                 # This is a commit we care about, unless we haven't skipped enough
                 # yet
                 skipped += 1
-                commits.push(Gollum::Git::Commit.new(c, track_pathnames ? current_path.dup : nil) if skipped > offset
+                commits.push(Gollum::Git::Commit.new(c, track_pathnames ? current_path.dup : nil)) if skipped > offset
               end
           end
         walker.reset
@@ -602,7 +602,7 @@ module Gollum
       def diff(sha1, sha2, *paths)
         opts = paths.nil? ? {} : {:paths => paths}
         @repo.diff(sha1, sha2, opts).diff.patches.map do |patch|
-          OpenStruct.new(:diff => patch.to_s.split("\n")[2..-1].join("\n").force_encoding("UTF-8"))} # First remove two superfluous lines.
+          OpenStruct.new(:diff => patch.to_s.split("\n")[2..-1].join("\n").force_encoding("UTF-8")) # First remove two superfluous lines.
         end.reverse # Rugged seems to order the diffs differently than Grit, so reverse.
       end
 
