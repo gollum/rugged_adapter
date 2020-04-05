@@ -629,6 +629,10 @@ module Gollum
         results
       end
 
+      def rev_parse(spec)
+        @repo.rev_parse(spec)
+      end
+
       def path
         @repo.path
       end
