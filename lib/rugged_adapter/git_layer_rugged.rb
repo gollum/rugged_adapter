@@ -126,6 +126,10 @@ module Gollum
         @stats ||= build_stats
       end
 
+      def parent
+        Gollum::Git::Commit.new(@commit.parents.first)
+      end
+
       private
 
       def build_stats
