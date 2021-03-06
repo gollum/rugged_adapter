@@ -235,7 +235,7 @@ module Gollum
           @repo.checkout_head(**options)
         else
           ref = "refs/heads/#{ref}" unless ref =~ /^refs\/heads\//
-          @repo.checkout_tree(sha_from_ref(ref), options)
+          @repo.checkout_tree(sha_from_ref(ref), **options)
         end
       end
 
@@ -310,13 +310,13 @@ module Gollum
 
       def push(remote, branches = nil, options = {})
         branches = [branches].flatten.map {|branch| "refs/heads/#{branch}" unless branch =~ /^refs\/heads\//}
-        @repo.push(remote, branches, options)
+        @repo.push(remote, branches, **options)
       end
 
       def pull(remote, branches = nil, options = {})
         branches = [branches].flatten.map {|branch| "refs/heads/#{branch}" unless branch =~ /^refs\/heads\//}
         r = @repo.remotes[remote]
-        r.fetch(branches, options)
+        r.fetch(branches, **options)
         branches.each do |branch|
           branch_name = branch.match(/^refs\/heads\/(.*)/)[1]
           remote_name = remote.match(/^(refs\/heads\/)?(.*)/)[2]
@@ -490,7 +490,7 @@ module Gollum
         commit_options[:message] = message.to_s
         commit_options[:parents] = parents
         commit_options[:update_ref] = head
-        Rugged::Commit.create(@rugged_repo, commit_options)
+        Rugged::Commit.create(@rugged_repo, **commit_options)
       end
 
       def tree
@@ -619,7 +619,7 @@ module Gollum
       end
 
       def log(commit = 'refs/heads/master', path = nil, options = {})
-        git.log(commit, path, options)
+        git.log(commit, path, **options)
       end
 
       def lstree(sha, options = {})
