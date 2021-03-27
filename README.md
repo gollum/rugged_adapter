@@ -4,9 +4,7 @@
 
 ## DESCRIPTION
 
-Adapter for [gollum](https://github.com/gollum/gollum) to use [Rugged](https://github.com/libgit2/rugged) (libgit2) at the backend. See the [gollum wiki](https://github.com/gollum/gollum/wiki/Git-adapters) for more information on adapters. Currently gollum uses grit as a backend by default, but since that is abandonware, the plan is to make this adapter the default in the future.
-
-**Please note that this adapter is currently in beta. It passes the unit tests for gollum and [gollum-lib](https://github.com/gollum/gollum-lib), but it needs more comprehensive testing. Please [report any issues](https://github.com/gollum/rugged_adapter/issues) that you encounter.**
+Adapter for [gollum](https://github.com/gollum/gollum) to use [Rugged](https://github.com/libgit2/rugged) (libgit2) at the backend. See the [gollum wiki](https://github.com/gollum/gollum/wiki/Git-adapters) for more information on adapters. Currently this is the default adapter for gollum.
 
 ## USAGE
 
