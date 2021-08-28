@@ -615,7 +615,7 @@ module Gollum
 
       def diff(sha1, sha2, *paths)
         opts = paths.nil? ? {} : {:paths => paths}
-        @repo.diff(sha1, sha2, opts).patch
+        @repo.diff(sha1, sha2, opts).patch.force_encoding('utf-8')
       end
 
       def log(commit = 'refs/heads/master', path = nil, options = {})
