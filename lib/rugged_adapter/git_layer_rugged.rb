@@ -174,7 +174,7 @@ module Gollum
       def grep(search_terms, options={}, &block)
         ref   = options[:ref] ? options[:ref] : "HEAD"
         tree  = @repo.lookup(sha_from_ref(ref)).tree
-        tree  = @repo.lookup(tree[options[:path]][:oid]) if options[:path]
+        tree  = @repo.lookup(tree.path(options[:path])[:oid]) if options[:path]
         enc   = options.fetch(:encoding, 'utf-8')
         results = []
         tree.walk_blobs(:postorder) do |root, entry|
