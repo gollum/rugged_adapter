@@ -1,5 +1,5 @@
 [![Gem Version](https://badge.fury.io/rb/gollum-rugged_adapter.svg)](http://badge.fury.io/rb/gollum-rugged_adapter)
-[![Build Status](https://travis-ci.org/gollum/rugged_adapter.svg?branch=master)](https://travis-ci.org/gollum/rugged_adapter)
+![Build Status](https://github.com/gollum/rugged_adapter/actions/workflows/test.yaml/badge.svg)
 [![Dependency Status](https://gemnasium.com/gollum/rugged_adapter.svg)](https://gemnasium.com/gollum/rugged_adapter)
 
 ## DESCRIPTION
