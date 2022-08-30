@@ -648,6 +648,14 @@ module Gollum
           @repo.checkout(ref, :strategy => :force) unless @repo.bare?
         end
       end
+
+      # Find the first existing branch in an Array of branch names of the form ['main', ...] and return its String name.
+      def find_branch(search_list)
+       all_branches = @repo.branches.to_a.map {|b| b.name}
+        search_list.find do |branch_name|
+          all_branches.include?(branch_name)
+        end
+      end
     end
 
     class Tree
