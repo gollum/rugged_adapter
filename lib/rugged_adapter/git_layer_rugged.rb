@@ -168,7 +168,7 @@ module Gollum
       end
 
       def exist?
-        ::File.exists?(@repo.path)
+        ::File.exist?(@repo.path)
       end
 
       def grep(search_terms, options={}, &block)
