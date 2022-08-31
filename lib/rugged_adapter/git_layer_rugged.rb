@@ -25,7 +25,7 @@ module Gollum
       begin
         repo.head.name
       rescue Rugged::ReferenceError
-        self.global_default_branch || 'refs/heads/main'
+        self.global_default_branch || 'refs/heads/master'
       end
     end
     
