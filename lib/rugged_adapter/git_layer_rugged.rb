@@ -240,10 +240,10 @@ module Gollum
         end
       end
 
-      def checkout(path, ref = Gollum::Git.default_ref_for_repo(@repo), options = {})
+      def checkout(path, ref = 'HEAD', options = {})
         path = path.nil? ? path : [path]
         options = options.merge({:paths => path, :strategy => :force})
-        if ref == @repo.head.name
+        if ref == 'HEAD'
           @repo.checkout_head(**options)
         else
           ref = "refs/heads/#{ref}" unless ref =~ /^refs\/heads\//
