@@ -17,6 +17,18 @@ module Gollum
     DEFAULT_MIME_TYPE = "text/plain"
     class NoSuchShaFound < StandardError; end
 
+    def self.global_default_branch
+      Rugged::Config.global['init.defaultBranch']
+    end
+
+    def self.default_ref_for_repo(repo)
+      begin
+        repo.head.name
+      rescue Rugged::ReferenceError
+        self.global_default_branch || 'refs/heads/master'
+      end
+    end
+    
     class Actor
 
       attr_accessor :name, :email, :time
@@ -239,7 +251,7 @@ module Gollum
         end
       end
 
-      def log(ref = 'refs/heads/master', path = nil, options = {})
+      def log(ref = Gollum::Git.default_ref_for_repo(@repo), path = nil, options = {})
         default_options = {
           :limit => options[:max_count] ? options[:max_count] : 10,
           :offset => options[:skip] ? options[:skip] : 0,
@@ -265,7 +277,7 @@ module Gollum
       end
 
       def ls_files(query, options = {})
-        ref = options[:ref] || "refs/heads/master"
+        ref = options[:ref] || Gollum::Git.default_ref_for_repo(@repo)
         tree = @repo.lookup(sha_from_ref(ref)).tree
         tree = @repo.lookup(tree[options[:path]][:oid]) if options[:path]
         results = []
@@ -459,6 +471,7 @@ module Gollum
       def initialize(index, repo)
         @index = index
         @rugged_repo = repo
+        @default_ref = Gollum::Git.default_ref_for_repo(@rugged_repo)
         @treemap = {}
       end
 
@@ -479,7 +492,7 @@ module Gollum
         @index
       end
 
-      def commit(message, parents = nil, actor = nil, last_tree = nil, head = 'refs/heads/master')
+      def commit(message, parents = nil, actor = nil, last_tree = nil, head = @default_ref)
         commit_options = {}
         head = "refs/heads/#{head}" unless head =~ /^refs\/heads\//
         parents = get_parents(parents, head) || []
@@ -597,7 +610,7 @@ module Gollum
         end
       end
 
-      def commits(start = 'refs/heads/master', max_count = 10, skip = 0)
+      def commits(start = Gollum::Git.default_ref_for_repo(@repo), max_count = 10, skip = 0)
         git.log(start, nil, :max_count => max_count, :skip => skip)
       end
 
@@ -618,7 +631,7 @@ module Gollum
         @repo.diff(sha1, sha2, opts).patch.force_encoding('utf-8')
       end
 
-      def log(commit = 'refs/heads/master', path = nil, options = {})
+      def log(commit = Gollum::Git.default_ref_for_repo(@repo), path = nil, options = {})
         git.log(commit, path, **options)
       end
 
@@ -646,6 +659,14 @@ module Gollum
         else
           @repo.create_branch(ref, commit_sha)
           @repo.checkout(ref, :strategy => :force) unless @repo.bare?
+        end
+      end
+
+      # Find the first existing branch in an Array of branch names of the form ['main', ...] and return its String name.
+      def find_branch(search_list)
+       all_branches = @repo.branches.to_a.map {|b| b.name}
+        search_list.find do |branch_name|
+          all_branches.include?(branch_name)
         end
       end
     end
