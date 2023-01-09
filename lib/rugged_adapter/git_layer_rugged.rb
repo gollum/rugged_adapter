@@ -143,6 +143,22 @@ module Gollum
         @commit.parents.empty? ? nil : Gollum::Git::Commit.new(@commit.parents.first)
       end
 
+      def note(ref='refs/notes/commits')
+        result = @commit.notes(ref)
+        result ? result[:message] : nil
+      end
+
+      def note=(msg, actor = nil, ref='refs/notes/commits')
+        actor = Gollum::Git::Actor.default_actor if actor.nil?
+        @commit.create_note(
+            author: actor.to_h,
+            committer: actor.to_h,
+            message: msg,
+            ref: ref,
+            force: true
+        )
+      end
+
       private
 
       def build_stats
