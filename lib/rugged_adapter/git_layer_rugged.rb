@@ -688,10 +688,10 @@ module Gollum
       def self.tree_entry_from_rugged_hash(entry, root = '')
         {
           sha:  entry[:oid],
-          mode: entry[:filemode].to_s(8),
+          mode: entry[:filemode],
           type: entry[:type].to_s,
-          name: "#{root}#{entry[:name]}",
-          path: "#{root}#{entry[:path]}", # Repo#lstree is expected to give back an object containing :path rather than :name
+          name: entry[:name],
+          path: "#{root}#{entry[:name]}"
         }
       end
 
