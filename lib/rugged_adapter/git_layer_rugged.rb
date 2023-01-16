@@ -729,8 +729,9 @@ module Gollum
         blobs
       end
 
-      def find_blob(name)
-        blob = @tree.each_blob.find {|blob| blob[:name] == name}
+      def find_blob(&block)
+        return nil unless block_given?
+        blob = @tree.each_blob.find {|blob| yield blob[:name] }
         blob ? blob_for_tree_entry(blob) : nil
       end
 
