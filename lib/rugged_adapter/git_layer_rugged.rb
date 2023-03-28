@@ -654,11 +654,7 @@ module Gollum
       def lstree(sha, options = {})
         results = []
         @repo.lookup(sha).tree.walk(:postorder) do |root, entry|
-          entry[:sha] = entry[:oid]
-          entry[:mode] = entry[:filemode].to_s(8)
-          entry[:type] = entry[:type].to_s
-          entry[:path] = "#{root}#{entry[:name]}"
-          results << entry
+          results << ::Gollum::Git::Tree.tree_entry_from_rugged_hash(entry, root)
         end
         results
       end
@@ -688,6 +684,16 @@ module Gollum
     end
 
     class Tree
+
+      def self.tree_entry_from_rugged_hash(entry, root = '')
+        {
+          sha:  entry[:oid],
+          mode: entry[:filemode],
+          type: entry[:type].to_s,
+          name: entry[:name],
+          path: "#{root}#{entry[:name]}"
+        }
+      end
 
       def initialize(tree)
         @tree = tree
@@ -719,10 +725,22 @@ module Gollum
 
       def blobs
         blobs = []
-        @tree.each_blob {|blob| blobs << Gollum::Git::Blob.new(@tree.owner.lookup(blob[:oid]), blob) }
+        @tree.each_blob {|blob| blobs << blob_for_tree_entry(blob) }
         blobs
       end
 
+      def find_blob(&block)
+        return nil unless block_given?
+        blob = @tree.each_blob.find {|blob| yield blob[:name] }
+        blob ? blob_for_tree_entry(blob) : nil
+      end
+
+      private
+
+      def blob_for_tree_entry(blob)
+        Gollum::Git::Blob.new(@tree.owner.lookup(blob[:oid]), self.class.tree_entry_from_rugged_hash(blob))
+      end
+      
     end
 
   end
