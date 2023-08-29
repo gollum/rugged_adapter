@@ -496,7 +496,11 @@ module Gollum
       # Hence, when path does not exist in the workdir (:worktree_deleted), this method returns false.
       def workdir_path_modified?(path)
         return false if @rugged_repo.bare?
-        !(@rugged_repo.status(path) & [:worktree_modified, :worktree_new]).empty?
+        begin
+          !(@rugged_repo.status(path) & [:worktree_modified, :worktree_new]).empty?
+        rescue Rugged::InvalidError
+          return false
+        end
       end
 
       def delete(path)
