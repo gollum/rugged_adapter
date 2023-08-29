@@ -491,6 +491,14 @@ module Gollum
         @treemap = {}
       end
 
+      # Determines whether a path in the working directory has been modified compared to the index: i.e., is new, or has new content.
+      # The purpose of this method is to determine whether it is safe to overwrite a path with information from the index.
+      # Hence, when path does not exist in the workdir (:worktree_deleted), this method returns false.
+      def workdir_path_modified?(path)
+        return false if @rugged_repo.bare?
+        !(@rugged_repo.status(path) & [:worktree_modified, :worktree_new]).empty?
+      end
+
       def delete(path)
         @index.remove_all(path)
         update_treemap(path, false)
