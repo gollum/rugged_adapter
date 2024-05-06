@@ -659,6 +659,12 @@ module Gollum
         results
       end
 
+      def lstree_all_directories(sha)
+        @repo.lookup(sha).tree.each_tree.map { |rugged_tree_entry|
+          ::Gollum::Git::Tree.tree_entry_from_rugged_hash rugged_tree_entry
+        }
+      end
+
       def path
         @repo.path
       end
