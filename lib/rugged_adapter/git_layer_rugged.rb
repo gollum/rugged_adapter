@@ -651,12 +651,25 @@ module Gollum
         git.log(commit, path, **options)
       end
 
-      def lstree(sha, options = {})
-        results = []
-        @repo.lookup(sha).tree.walk(:postorder) do |root, entry|
-          results << ::Gollum::Git::Tree.tree_entry_from_rugged_hash(entry, root)
+      def lstree(sha, path, options = {})
+
+        if path
+          tree = @repo.lookup(sha).tree / path
+        else
+          tree = @repo.lookup(sha).tree
         end
-        results
+
+        if options.fetch(:recursive, true)
+          results = []
+          tree.walk(:postorder) do |root, entry|
+            results << ::Gollum::Git::Tree.tree_entry_from_rugged_hash(entry, root)
+          end
+          results
+        else
+          tree.map do |entry|
+            Gollum::Git::Tree.tree_entry_from_rugged_hash(entry, root)
+          end
+        end
       end
 
       def path
