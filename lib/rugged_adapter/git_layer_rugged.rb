@@ -651,12 +651,12 @@ module Gollum
         git.log(commit, path, **options)
       end
 
-      def lstree(sha, path, options = {})
+      def lstree(sha, path = '/', options = {})
 
+        tree = @repo.lookup(sha).tree
         if path
-          tree = @repo.lookup(sha).tree / path
-        else
-          tree = @repo.lookup(sha).tree
+          tree = Gollum::Git::Tree.rugged_tree_path(tree, path)
+          return nil unless tree  
         end
 
         if options.fetch(:recursive, true)
@@ -667,7 +667,7 @@ module Gollum
           results
         else
           tree.map do |entry|
-            Gollum::Git::Tree.tree_entry_from_rugged_hash(entry, root)
+            Gollum::Git::Tree.tree_entry_from_rugged_hash(entry, path)
           end
         end
       end
@@ -698,6 +698,19 @@ module Gollum
 
     class Tree
 
+      attr_reader :tree
+
+      def self.rugged_tree_path(tree, path)
+        return tree if path == '/'
+        begin
+          obj = tree.path(path)
+          rescue Rugged::TreeError
+            return nil
+          end
+          return nil if obj.nil?
+          tree.owner.lookup(obj[:oid])
+      end
+
       def self.tree_entry_from_rugged_hash(entry, root = '')
         {
           sha:  entry[:oid],
@@ -724,16 +737,10 @@ module Gollum
         @tree.oid
       end
 
-      def /(file)
-        return self if file == '/'
-        begin
-        obj = @tree.path(file)
-        rescue Rugged::TreeError
-          return nil
-        end
+      def /(path)
+        obj = self.class.rugged_tree_path(@tree, path)
         return nil if obj.nil?
-        obj = @tree.owner.lookup(obj[:oid])
-        obj.is_a?(Rugged::Tree) ? Gollum::Git::Tree.new(obj) : Gollum::Git::Blob.new(obj)
+        (obj).is_a?(Rugged::Tree) ? Gollum::Git::Tree.new(obj) : Gollum::Git::Blob.new(obj)
       end
 
       def blobs
